@@ -1,0 +1,93 @@
+proxmox na fujitsu Esprimo 85+ i3 + 8GB DDR3 
+
+2x HDD 320G w RAID1 dla proxmox
+2x HDD ~500GB pass through a physical disk to the guest OpenmediaVault virtual machine
+
+1. Instalacja systemu podstawowego debian buster na soft Raid Mirror i instalacja proxmox 6.3-3
+	wg przepisu: https://wiblo.pl/2017/12/08/serwer-domowy-z-proxmox-wirtualizacja-cz-1/
+
+2. Instalacja openmediavault na VM system podst. debian buster
+
+3. konfiguracja przelotu dysków fizycznych do VM-OMV 
+dystki te to /dev/sdc i /dev/sdd
+
+ ls -l /dev/disk/by-id
+
+lrwxrwxrwx 1 root root  9 lut 21 18:46 ata-HGST_HTS725050A7E630_TF655AY91ZEGNL -> ../../sdd
+lrwxrwxrwx 1 root root  9 lut 21 13:08 ata-SAMSUNG_HD322HJ_S17AJ90S100078 -> ../../sdb
+lrwxrwxrwx 1 root root 10 lut 21 13:08 ata-SAMSUNG_HD322HJ_S17AJ90S100078-part1 -> ../../sdb1
+lrwxrwxrwx 1 root root 10 lut 21 13:08 ata-SAMSUNG_HD322HJ_S17AJ90S100078-part2 -> ../../sdb2
+lrwxrwxrwx 1 root root 10 lut 21 13:08 ata-SAMSUNG_HD322HJ_S17AJ90S100078-part5 -> ../../sdb5
+lrwxrwxrwx 1 root root  9 lut 21 13:08 ata-SAMSUNG_HM320HJ_S2ANJDRZ810719 -> ../../sda
+lrwxrwxrwx 1 root root 10 lut 21 13:08 ata-SAMSUNG_HM320HJ_S2ANJDRZ810719-part1 -> ../../sda1
+lrwxrwxrwx 1 root root 10 lut 21 13:08 ata-SAMSUNG_HM320HJ_S2ANJDRZ810719-part2 -> ../../sda2
+lrwxrwxrwx 1 root root 10 lut 21 13:08 ata-SAMSUNG_HM320HJ_S2ANJDRZ810719-part5 -> ../../sda5
+lrwxrwxrwx 1 root root  9 lut 21 18:52 ata-ST500DM002-1BD142_Z6EPRFFE -> ../../sdc
+lrwxrwxrwx 1 root root  9 lut 21 13:08 md-name-HyperV:0 -> ../../md0
+lrwxrwxrwx 1 root root 11 lut 21 13:08 md-name-HyperV:0-part1 -> ../../md0p1
+lrwxrwxrwx 1 root root 11 lut 21 13:08 md-name-HyperV:0-part2 -> ../../md0p2
+lrwxrwxrwx 1 root root 11 lut 21 13:08 md-name-HyperV:0-part5 -> ../../md0p5
+lrwxrwxrwx 1 root root  9 lut 21 13:08 md-uuid-dc2a681a:ae0b9ab7:bff5fff8:c81a779e -> ../../md0
+lrwxrwxrwx 1 root root 11 lut 21 13:08 md-uuid-dc2a681a:ae0b9ab7:bff5fff8:c81a779e-part1 -> ../../md0p1
+lrwxrwxrwx 1 root root 11 lut 21 13:08 md-uuid-dc2a681a:ae0b9ab7:bff5fff8:c81a779e-part2 -> ../../md0p2
+lrwxrwxrwx 1 root root 11 lut 21 13:08 md-uuid-dc2a681a:ae0b9ab7:bff5fff8:c81a779e-part5 -> ../../md0p5
+lrwxrwxrwx 1 root root  9 lut 21 13:08 wwn-0x50000f000b010087 -> ../../sdb
+lrwxrwxrwx 1 root root 10 lut 21 13:08 wwn-0x50000f000b010087-part1 -> ../../sdb1
+lrwxrwxrwx 1 root root 10 lut 21 13:08 wwn-0x50000f000b010087-part2 -> ../../sdb2
+lrwxrwxrwx 1 root root 10 lut 21 13:08 wwn-0x50000f000b010087-part5 -> ../../sdb5
+lrwxrwxrwx 1 root root  9 lut 21 18:52 wwn-0x5000c5008750fe91 -> ../../sdc
+lrwxrwxrwx 1 root root  9 lut 21 18:46 wwn-0x5000cca76cdbed36 -> ../../sdd
+lrwxrwxrwx 1 root root  9 lut 21 13:08 wwn-0x50024e9003eccf0b -> ../../sda
+lrwxrwxrwx 1 root root 10 lut 21 13:08 wwn-0x50024e9003eccf0b-part1 -> ../../sda1
+lrwxrwxrwx 1 root root 10 lut 21 13:08 wwn-0x50024e9003eccf0b-part2 -> ../../sda2
+lrwxrwxrwx 1 root root 10 lut 21 13:08 wwn-0x50024e9003eccf0b-part5 -> ../../sda5
+
+#podpinanie dysku fizycznego sdc do VM nr 100
+qm set 100 -virtio1 /dev/disk/by-id/ata-ST500DM002-1BD142_Z6EPRFFE 
+
+#podpinanie dysku fizycznego sdd do VM nr 100
+qm set 100 -virtio2 /dev/disk/by-id/ata-HGST_HTS725050A7E630_TF655AY91ZEGNL 
+
+chyba lepiej jest u¿yæ scsi1:
+/usr/sbin/qm set 104 -scsi1 /dev/disk/by-id/scsi-3600508b1001c30cbc217532c4f32c061
+
+# widaæ te dyski w OMV jako /dev/vda i /dev/vdb, niestety nie da siê skonfigurowaæ na mich RAID z poziomu OMV.
+By je u¿ywaæ nale¿y za³o¿yæ system plików i zamontowac.
+
+# usuwanie passthrouth z GUI Proxmoxa
+
+!!!! MOntowanie passthru soft Raid1
+
+
+utwórz VM 8G HDD ze 512/2048 RAM
+zainstaluj openmediavault na sda1
+apt install qemu-guest-agent mc nano htop
+ip a
+zaloguj haslo openmediavault
+poustawiaj Ip i has³a
+poweroff
+/usr/sbin/qm set 104 -scsi1 /dev/disk/by-id/scsi-3600508b1001c30cbc217532c4f32c061
+dyski-> wykryj->sdb -> czysc
+system plików->
+
+Aktualizacja 2023-01-20
+
+Wyszuka³em dyski aby znaleŸæ disk/by-id:
+lsblk |awk 'NR==1{print $0" DEVICE-ID(S)"}NR>1{dev=$1;gsub("[^[:alnum:]]","",dev);printf $0"\t\t";system("find /dev/disk/by-id -lname \"*"dev"\" -printf \" %p\"");print "";}'
+
+
+Zmapowa³em w proxmoxie dyski sdb i sdc do virtualki OMV111
+qm set 111 -scsi1  /dev/disk/by-id/wwn-0x50014ee20711759c 
+qm set 111 -scsi2  /dev/disk/by-id/ata-WDC_WD10EARX-00N0YB0_WD-WMC0S0651889
+
+wyczyœci³em dyski w GUI OMV
+( nie mog³em utworzyæ RAID1 bo sdb i sdc busy
+po wielu wy³¹czeniach poweroff OMV uda³o mi siê utworzyæ RAID1 z gui OMV
+
+Utworzy³em z GUI system plików ext4 na: Software RAID OMV:0 [/dev/md0, raid1, 931.38 GiB]
+
+
+
+
+
+ 
